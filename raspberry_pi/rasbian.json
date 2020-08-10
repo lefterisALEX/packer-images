@@ -1,0 +1,109 @@
+{
+  "variables": {
+    "wifi_name": "SSID", 
+    "image_version": "1.0"
+  },
+  "builders": [{
+    "type": "arm",
+    "file_urls" : ["http://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2020-02-14/2020-02-13-raspbian-buster-lite.zip"],
+    "file_checksum_url": "http://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2020-02-14/2020-02-13-raspbian-buster-lite.zip.sha256",
+    "file_checksum_type": "sha256",
+    "file_target_extension": "zip",
+    "image_build_method": "reuse",
+    "image_path": "rasbian-tira_\"{{user `image_version`}}\".img",
+    "image_size": "2G",
+    "image_type": "dos",
+    "image_partitions": [
+      {
+        "name": "boot",
+        "type": "c",
+        "start_sector": "8192",
+        "filesystem": "vfat",
+        "size": "256M",
+        "mountpoint": "/boot"
+      },
+      {
+        "name": "root",
+        "type": "83",
+        "start_sector": "532480",
+        "filesystem": "ext4",
+        "size": "0",
+        "mountpoint": "/"
+      }
+    ],
+    "image_chroot_env": ["PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"],
+    "qemu_binary_source_path": "/usr/bin/qemu-arm-static",
+    "qemu_binary_destination_path": "/usr/bin/qemu-arm-static"
+  }],
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "initialize.sh",
+      "destination": "/home/pi/initialize.sh"
+    },    {
+      "type": "file",
+      "source": "wifi.service",
+      "destination": "/etc/systemd/system/wifi.service"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "touch /boot/ssh",
+        "apt-get update",
+        "apt-get -y install git",
+        "chmod 744 /etc/systemd/system/ssh-relay.service",
+        "systemctl daemon-reload",
+        "systemctl enable ssh-relay",
+        "systemctl start ssh-relay",
+        "chmod 744 /etc/systemd/system/wifi.service",
+        "systemctl daemon-reload",
+        "systemctl enable wifi",
+        "systemctl start wifi",
+        "mkdir /home/pi/.ssh",
+        "chown pi:pi /home/pi/.ssh",
+        "touch /home/pi/.ssh/authorized_keys",
+        "sed -i '$ s/$/ cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1/' /boot/cmdline.txt",
+        "ssh-keygen -t rsa -b 4096  -f /root/.ssh/id_rsa -P ''",
+        "ssh-keygen -t rsa -b 4096  -f /home/pi/.ssh/id_rsa -P ''",
+        "curl -LO 'https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl'",
+        "chmod +x ./kubectl",
+        "mv ./kubectl /usr/local/bin/kubectl",
+        "chown pi:pi /home/pi/*",
+        "sed -i 's/gb/us/g' /etc/default/keyboard"
+      ]
+    },
+
+    {
+      "type": "shell",
+      "inline": [
+        "sed '/PasswordAuthentication/d' -i /etc/ssh/sshd_config",
+        "echo >> /etc/ssh/sshd_config",
+        "echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config",
+        "chown -R pi:pi /home/pi/.ssh/"
+      ]
+    },
+
+    {
+      "type": "shell",
+      "inline": [
+        "echo 'pi:\"{{user `pi_pass`}}\"' | chpasswd"
+    {
+      "type": "shell",
+      "inline": [
+        "echo 'network={' >> /etc/wpa_supplicant/wpa_supplicant.conf",
+        "echo '    ssid=\"{{user `wifi_name`}}\"' >> /etc/wpa_supplicant/wpa_supplicant.conf",
+        "echo '    psk=\"{{user `wifi_password`}}\"' >> /etc/wpa_supplicant/wpa_supplicant.conf",
+        "echo '}' >> /etc/wpa_supplicant/wpa_supplicant.conf"
+               ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+         "cat /home/pi/.ssh/id_rsa.pub",
+         "echo \"{{user `pi_pass`}}\""
+]
+    }
+  ]
+}
+
+

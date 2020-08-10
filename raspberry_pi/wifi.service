@@ -1,0 +1,11 @@
+#/bin/bash
+
+
+Description=Enable wifi controller
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/rfkill unblock wifi
+
+[Install]
+WantedBy=multi-user.target

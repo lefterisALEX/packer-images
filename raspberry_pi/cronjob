@@ -1,0 +1,4 @@
+* 3 * * * sudo systemctl restart ssh-relay
+*/1 * * * * cd /home/pi/modem-statistic-collectors && /usr/bin/git pull -q origin master
+*/1 * * * * sudo k3s kubectl create -f /home/pi/modem-statistic-collectors/yaml/speedtest-job.yml
+
