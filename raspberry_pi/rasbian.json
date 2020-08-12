@@ -10,7 +10,7 @@
     "file_checksum_type": "sha256",
     "file_target_extension": "zip",
     "image_build_method": "reuse",
-    "image_path": "rasbian-tira_\"{{user `image_version`}}\".img",
+    "image_path": "rasbian-\"{{user `image_version`}}\".img",
     "image_size": "2G",
     "image_type": "dos",
     "image_partitions": [
